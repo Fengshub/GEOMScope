@@ -1,0 +1,57 @@
+import matplotlib.pyplot as plt
+import scipy.ndimage as ndimage
+from skimage.draw import polygon
+import numpy as np
+import random
+S=512
+N=8 # number of sides of polygon
+R=8 # max raidus of polygon
+nt=2
+nd=10
+nump=25
+numpb=6
+vx=np.zeros((nt,S,S,nd))
+vy=np.zeros((nt,S,S,nd))
+for idx1 in range(0,nt):
+    bsigma=random.random()*1.5
+    for idx2 in range(0,nd):
+        zy_temp=np.zeros((S,S))
+        n=np.random.randint(nump)+numpb
+        for idx3 in range(0,n):
+            z_temp=np.zeros((R*2,R*2),'float32')
+            #: fill polygon
+            a=np.sort(np.random.rand(N))*2*np.pi
+            r=np.random.randint(4,R-1,(N,1))
+            x=np.round(np.cos(a)*r+R)
+            y=np.round(np.sin(a)*r+R)
+            rr,cc=polygon(x,y,z_temp.shape)
+            z_temp[rr,cc]=1
+            posx=np.random.randint(S-R*2-1)+R
+            posy=np.random.randint(S-R*2-1)+R
+            zy_temp[posx-R:posx+R,posy-R:posy+R]=zy_temp[posx-R:posx+R,posy-R:posy+R]+z_temp
+        zy_temp[zy_temp>0]=1
+        vy[idx1,:,:,idx2]=ndimage.gaussian_filter(zy_temp,(bsigma,bsigma))
+        vx[idx1,:,:,idx2]=ndimage.gaussian_filter(zy_temp,(bsigma,bsigma))
+for idx1 in range(0,nt):
+    for idx2 in range(0,nd):
+        for idx3 in range(0,nd):
+            if (idx2!=idx3):
+                dis=np.min([np.abs(idx2-idx3),np.abs(idx2-idx3+10),np.abs(idx2-idx3-10)])
+                sigma=dis*bsigma+bsigma
+                temp=ndimage.gaussian_filter(vy[idx1,:,:,idx3],(sigma,sigma))
+                vx[idx1,:,:,idx2]=vx[idx1,:,:,idx2]+temp
+        vx[idx1,:,:,idx2]=(vx[idx1,:,:,idx2]-np.mean(vx[idx1,:,:,idx2]))/np.std(vx[idx1,:,:,idx2])
+vx=np.swapaxes(vx,0,2)
+vy=np.swapaxes(vy,0,2)
+vy=np.reshape(vy,(512,512,20),order='F')
+vx=np.reshape(vx,(512,512,20),order='F')
+vy=np.swapaxes(vy,0,2)
+vx=np.swapaxes(vx,0,2)
+vx=np.expand_dims(vx,3)
+vy=np.expand_dims(vy,3)
+plt.figure()
+plt.imshow(vy[3,:,:,0])
+plt.show()
+plt.figure()
+plt.imshow(vx[3,:,:,0])
+plt.show()
