@@ -1,1 +1,1 @@
-# lens-array-imaging
+# GEOMScope
