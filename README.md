@@ -23,4 +23,4 @@ We also provide lens array & emission filter holder we used, and several [**CAD*
 We provide [**code**](https://github.com/Fengshub/GEOMScope/blob/master/unet.py) to build convolutional network modules for post processing, and [**training**](https://github.com/Fengshub/GEOMScope/blob/master/traindata.py).
 
 ## Zemax Ray tracing simulation
-We provide ZemaxOpticStudio lens [**zmx**](https://github.com/Fengshub/GEOMScope/blob/master/Zemax/lensarray_nsq.zmx) file in non sequential mode on the full microlens array simulation with our [**CAD target**](https://github.com/Fengshub/GEOMScope/blob/master/CAD/letter_v4.step)
+We provide ZemaxOpticStudio lens [**zmx**](https://github.com/Fengshub/GEOMScope/blob/master/Zemax/lensarray_nsq.zmx) file in non sequential mode on the full microlens array simulation with our [**CAD target**](https://github.com/Fengshub/GEOMScope/blob/master/CAD/letter_v4.step).
