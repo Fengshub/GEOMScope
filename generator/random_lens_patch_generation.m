@@ -1,17 +1,20 @@
-z=zeros(1601); %801
-z2=z;
-z(781:820,781:820)=1;
-z2(801,801)=1;
-d=1;
-listx=801;
+%% random lens unit generation
+% parameter setup
+z=zeros(1601); % total canvas size
+z2=z; % copy of canvas for pixel distance calculation
+z(781:820,781:820)=1; % assign first lens effective area
+z2(801,801)=1; % assign first lens coordinate
+d=1; % stop criteria
+listx=801; % list of lens coordinates
 listy=801;
-idx=1;
+idx=1; % number of lenses
+%% generate lens array
 while d==1
-    x=round(cos(rand*pi)*randi(750)+801);
+    x=round(cos(rand*pi)*randi(750)+801); % random generate lens coordinate
     y=round(cos(rand*pi)*randi(750)+801);
 %     x=round(rand*900+51);
 %     y=round(rand*900+51);
-    if z2(x,y)==0
+    if z2(x,y)==0 % calulcate nearby lens distances to check if current position is valid for new lens 
         p1=z2(x-20:x+19,y-20:y+19);
         p2=z2(x-40:x+39,y-40:y+39);
         if isempty(find(p1>0))&&(isempty(find(p2>0))==0)
@@ -24,7 +27,7 @@ while d==1
 %             if isempty(find(dt==0))
 %                 d=0;
 %             end
-            if (mod(idx,50)==0)
+            if (mod(idx,50)==0) % plot new lens map and update coordinates
                 imagesc(z)
                 pause(0.2)
             end
