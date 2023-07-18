@@ -78,6 +78,7 @@ figure
 imagesc(imgaussfilt(psf,5))
 daspect([1 1 1])
 %% 3D reconstruction by ray tracing
+dist=(-4:2:18)+40; % reconstruction distance in mm
 % close all
 S=1024; % reconstruction voxel in x and y (same as sensor size)
 fov=S; % reconstruction field of view in voxels (can be larger than sensor size)
@@ -92,7 +93,9 @@ ory=2560;
 % t2=1;
 scale0=1.1295; % base obj plane scale
 mag0=scale0-1; % base obj plane magnification 
-for disd=32:0.4:36.6 % reconstruction distance
+% for disd=32:0.4:36.6 % reconstruction distance (for microspheres)
+for disdx=1:12 % reconstruction distance
+    disd=dist(disdx);
     mag=4.6/disd; % calculate magnification
     scale=1+mag; % calculate scale
 % for idx=-2:2:2
