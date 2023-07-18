@@ -1,3 +1,4 @@
+# FreeCAD MACRO script for placing objects as array
 doc = FreeCAD.newDocument()
 cylinder = doc.addObject("Part::Cone","Cone")
 cylinder.Radius1=0.15
