@@ -5,7 +5,7 @@ Tian, F., Hu, J., Yang, W., GEOMScope: Large Field-of-View 3D Lensless Microscop
 ![Diagram of geomscope](https://github.com/Fengshub/GEOMScope/blob/master/imgs/imager_schematic2.png)
 ### Clone this repository:
 ```
-git clone https://github.com/Yang-Research-Laboratory/Learned-Lensless-3D-Camera.git
+git clone https://github.com/Fengshub/GEOMScope
 ```
 
 ## Ray tracing algorithm and clustering algorithm for sparse objects
