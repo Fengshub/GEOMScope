@@ -1,5 +1,4 @@
 # GEOMScope: Large Field-of-View 3D Lensless Microscopy with Low Computational Complexity
-This is a temporary repository for work <br />
 Tian, F., Hu, J., Yang, W., GEOMScope: Large Field-of-View 3D Lensless Microscopy with Low Computational Complexity. Laser & Photonics Reviews 2021, 15, 2100072.
 ## [Paper](https://onlinelibrary.wiley.com/doi/full/10.1002/lpor.202100072)
 ![Diagram of geomscope](https://github.com/Fengshub/GEOMScope/blob/master/imgs/imager_schematic2.png)
