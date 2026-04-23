@@ -1,7 +1,7 @@
 %%
 clear;clc;close all;
 %%
-load('fig5_measurement_uint8.mat'); % load measurement data
+load('fluorescent_particles_measurement_uint8.mat'); % load measurement data
 im=double(im)/255;
 figure
 imagesc(imgaussfilt(im,3))

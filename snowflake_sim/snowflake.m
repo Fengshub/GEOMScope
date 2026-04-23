@@ -1,7 +1,7 @@
 %%
 clear;clc;close all;
-%%
-load('fig1_measurement_uint8.mat'); % load measurement data
+%% 
+load('snowflake_measurement_uint8.mat');
 im=double(im)/255;
 figure
 imagesc(imgaussfilt(im,3))
