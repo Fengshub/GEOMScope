@@ -1,0 +1,251 @@
+%%
+clear;clc;close all;
+%%
+load('fig5_measurement.mat'); % load measurement data
+figure
+imagesc(imgaussfilt(im,3))
+daspect([1 1 1])
+title('measurement')
+%% for point source reconstruction, the rotation angle is very important and needs to be very precise!
+% load coordinates of lens units in (-10mm,10mm)
+sup1_2;
+mask=zeros(5120);
+% convert to measurement matrix coordinate
+a=a+11.52;
+a=round(a*222.2)+1;
+for idx=1:length(a)
+    mask(a(idx,1),a(idx,2))=1;
+end
+% calibrate rotation angles
+roa=238.63;
+roar=roa*pi/180;
+mask2=zeros(size(mask));
+[cx0,cy0]=find(mask~=0);
+x=cx0-2560;
+y=cy0-2560;
+cx=zeros(size(cx0));
+cy=zeros(size(cx0));
+for idx3=1:length(cx0)
+    cx(idx3)=cos(roar)*x(idx3)-sin(roar)*y(idx3)+2560;
+    cy(idx3)=sin(roar)*x(idx3)+cos(roar)*y(idx3)+2560;
+    if (cx(idx3)>0 & cx(idx3)<5120 & cy(idx3)>0 & cy(idx3)<5120)
+        mask2(round(cx(idx3)),round(cy(idx3)))=1;
+    end
+end
+mask2=padarray(mask2,[500 500]);
+mask2=mask2(round(size(mask2,1)/2)-2559+50:round(size(mask2,1)/2)+2560+50,round(size(mask2,2)/2)-2559-50:round(size(mask2,2)/2)+2560-50);
+[cx0,cy0]=find(mask2~=0);
+psf=mask2;
+figure
+imagesc(imgaussfilt(psf,5))
+title('psf')
+daspect([1 1 1])
+%% 10/21 11/20
+% close all
+S=1024; % reconstruction grid size
+fov=S;
+recon_rec=zeros(S,S,10); % allocate reconstruction volume
+So=5; % downsampling rate
+ridx=1
+orx=2560;
+ory=2560;
+scale0=1.1295;
+disi=4.6;% image plane distance
+mag0=scale0-1;
+[cx0,cy0]=find(psf~=0);% lens unit coordinates
+for disd=32:0.4:36.6
+    mag=4.6/disd;% image/object magnification
+    scale=1+mag;
+    smin=1;
+    smax=1024;
+    recon=zeros(smax-smin+1);
+    % scan voxel coordinates and back propagate image pixels
+	for idx1=smin:smax
+        iidx1=idx1-smin+1;
+        cx=round((cx0-idx1*So)*scale+idx1*So);
+        for idx2=smin:smax
+            iidx2=idx2-smin+1;
+            recon_stack=zeros(1,length(cx));
+            cy=round((cy0-idx2*So)*scale+idx2*So);% find contributing image pixels for current voxel as (cx, cy)
+            list=zeros(1,length(cx));
+            for idx3=1:length(cx)
+                sx=(cx(idx3)-(idx1*So-orx)*mag)-idx1*So;
+                sy=(cy(idx3)-(idx2*So-ory)*mag)-idx2*So;
+                dis=sqrt(sx^2+sy^2); % lens center to reconstruction point lateral distance
+                if (cy(idx3)>1) && (cx(idx3)>1) && (cx(idx3)<=5120) && (cy(idx3)<=5120) &&(dis<1500) % selecting effective image pixels
+                    recon_stack(idx3)=im(floor(cx(idx3)),floor(cy(idx3)));
+                    recon(iidx1,iidx2)=recon(iidx1,iidx2)+im(floor(cx(idx3)),floor(cy(idx3)));% pixel back propagation
+                end
+            end
+            recon_stack=sort(recon_stack,'descend');
+            recon_stack(3:end)=0;
+            recon(iidx1,iidx2)=recon(iidx1,iidx2)-sum(recon_stack);
+        end
+    end
+%     recon=imrotate(recon,180);
+%     for idx1=1:S
+%         for idx2=1:S
+%             temp=recon_stack(idx1,idx2,:);
+%             temp(temp==max(temp))=0;
+%             recon_stack(idx1,idx2,:)=temp;
+%         end
+%     end     
+%     recon=sum(recon_stack,3);
+    recon_rec(:,:,ridx)=imresize(recon,[S,S]);
+    ridx=ridx+1
+end
+figure
+imagesc(recon)
+% hold on
+% plot(t2,t1,'o')
+daspect([1 1 1])
+% caxis([1000 3000])
+%% 
+% c=zeros(S);
+[x,y]=meshgrid(linspace(-1,1,S));
+c=x.^2+y.^2+5;
+c=c./max(c(:));
+for idx=1:size(recon_rec3,3)
+    recon_rec3(:,:,idx)=recon_rec3(:,:,idx).*c;
+end
+%% 11/20
+recon_rec3=recon_rec;
+%% 
+% recon_rec=recon_rec3;
+% recon_rec=imgaussfilt(recon_rec,2)+rand(size(recon_rec))*0.005;
+% A=findpeaks(recon_rec);
+% recon_rec4(A)=recon_rec3(A);
+% recon=sum(recon_rec4(:,:,:),3);
+% figure
+% imagesc(recon)
+% % imagesc(imgaussfilt(recon,2))
+% axis off
+% daspect([1 1 1])
+%% 11/20
+% recon_rec(isnan(recon_rec))=0;
+% recon_rec3=recon_rec;
+recon_rec=recon_rec3;
+recon_rec(1:5,:,:)=0;recon_rec(:,1:5,:)=0;recon_rec(end-4:end,:,:)=0;recon_rec(:,end-4:end,:)=0;
+recon_rec(recon_rec<1500)=0;
+recon_rec=imgaussfilt(recon_rec,3);
+% recon_rec=recon_rec3;
+% recon_rec=imgaussfilt(recon_rec,3);
+% CCmap=zeros(size(recon_rec));
+% for idx=1:size(recon_rec,3)
+%     CCidx=bwconncomp(recon_rec(:,:,idx));
+%     temp=CCmap(:,:,idx);
+%     for cidx=1:CCidx.NumObjects
+%         temp(CCidx.PixelIdxList{cidx})=1;
+%     end
+%     CCmap(:,:,idx)=temp;
+
+CC = bwconncomp(recon_rec,26);
+% recon_rec2=zeros(size(recon_rec));
+% for idx=1:CC.NumObjects
+%     temp=CC.PixelIdxList{idx};
+%     a=find(recon_rec==max(recon_rec(temp)));
+%     recon_rec2(a)=recon_rec(a);
+% end
+recon_rec5=zeros(size(recon_rec));
+recon=zeros(size(recon_rec,1),size(recon_rec,2));
+recon2=zeros(size(recon_rec,1),size(recon_rec,2),size(recon_rec,3));
+for th=0.05:0.05:0.8
+    for idx=1:CC.NumObjects
+        temp=CC.PixelIdxList{idx};
+%         if length(temp)<10
+%             recon_rec(temp)=0;
+%         else
+            recon_rec(temp)=recon_rec(temp)/max(recon_rec(temp));
+%         end
+    end
+    recon_rec(recon_rec<th)=0;
+    disp(th);
+    CC = bwconncomp(recon_rec,26);
+    recon_rec4=zeros(size(recon_rec));
+    for idx=1:CC.NumObjects
+        temp=CC.PixelIdxList{idx};
+        recon_rec(temp)=recon_rec(temp)+rand(size(temp))*0.005;
+        a=find(recon_rec==max(recon_rec(temp)));
+%         if(a==562884)
+%             bb=1;
+%         end
+        if length(temp)<10
+            recon_rec4(a)=recon_rec3(a);
+        else
+            recon_rec4(a)=recon_rec3(a);%/(length(temp)/50).^0.3;
+        end
+%         recon_rec5(a)=recon_rec3(a)/(length(temp)/50).^0.3;
+    end
+    recon=recon+sum(recon_rec4(:,:,:),3);
+    recon2=recon2+recon_rec4;
+end
+% recon=sum(recon_rec4(:,:,:),3);
+recon=recon/max(recon(:));
+figure
+imagesc(imgaussfilt(recon,2))
+axis off
+daspect([1 1 1])
+%%
+recon3=sum(recon_rec3(:,:,:),3);
+figure
+imagesc(imgaussfilt(recon3,2))
+axis off
+%%
+close all
+for idx=1:12
+    figure
+    imagesc(imgaussfilt(recon_rec4(:,:,idx),5))
+    daspect([1 1 1])
+    axis off
+end
+%% 
+close all
+maxi=max(recon_rec3(:));
+for idx=5:12
+    figure
+    temp=recon_rec3(:,:,idx);
+    imagesc(recon_rec3(:,:,idx))
+    daspect([1 1 1])
+    axis off
+%     colormap fire
+end
+%% 
+% recon2=flip(recon,2);
+figure
+imagesc(imgaussfilt(recon,2))
+% imagesc(recon2)
+% daspect([1 1 1])
+axis off
+% grid off
+% caxis([0 30])
+%% 10/21
+close all
+for idx=5:12
+    figure
+    imagesc(imgaussfilt(recon_rec4(:,:,idx),2))
+    daspect([1 1 1])
+    axis off
+    caxis([0 30])
+end
+%%
+% maxi=max(recon_rec4(:));
+close all
+% recon3(:,:,5)=recon3(:,:,5)+recon3(:,:,4);
+recon3=imgaussfilt(recon2,2);
+maxi=max(recon3(:));
+for idx=5:13
+    if idx>=13
+        temp=zeros(1024,1024);
+    else
+        temp=recon3(:,:,idx);%imgaussfilt(recon3(:,:,idx),2);
+    end
+    temp=temp/maxi;
+    imwrite(temp,[num2str(idx),'.jpg'])
+    figure
+    imagesc(temp)
+    daspect([1 1 1])
+    axis off
+%     colormap fire
+    colormap parula
+    caxis([0 1])
+end
