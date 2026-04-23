@@ -1,32 +1,34 @@
 %% read measurement image
-name='Newmeasurement';
-t=Tiff([name,'.tif'],'r'); % target image
-im=read(t);
-im=double(im);
-% Frequenc domain filtering
-for iter=1:2 % number of iterations for 
-    im_f=(fftshift((fft2(ifftshift(im)))));
-    off=0;
-    im_f(2561-off:2561+off,2561-off:2561+off)=0;
-    im2=(abs(ifftshift(ifft2(fftshift(im_f)))));
-    im=im2;
-end
-figure
-imagesc(im)
-daspect([1 1 1])
+% name='Newmeasurement';
+% t=Tiff([name,'.tif'],'r'); % target image
+% im=read(t);
+% im=double(im);
+% % Frequenc domain filtering
+% for iter=1:2 % number of iterations for 
+%     im_f=(fftshift((fft2(ifftshift(im)))));
+%     off=0;
+%     im_f(2561-off:2561+off,2561-off:2561+off)=0;
+%     im2=(abs(ifftshift(ifft2(fftshift(im_f)))));
+%     im=im2;
+% end
+% figure
+% imagesc(im)
+% daspect([1 1 1])
 %% load processed image
+clear;clc;close all;
 load rawdata.mat
+im=imrotate(im,180);
 %% R-L deconvolution to deblur (test version)
-psfd=zeros(7);
-psfd(4,4)=1;
-psfd=imgaussfilt(psfd,1.5);
-J=deconvlucy(im,psfd,10);
-% J=deconvwnr(im,psf,10);
-figure
-imagesc(J)
-daspect([1 1 1])
-im=J;
-save(['im',name],'im')
+% psfd=zeros(7);
+% psfd(4,4)=1;
+% psfd=imgaussfilt(psfd,1.5);
+% J=deconvlucy(im,psfd,10);
+% % J=deconvwnr(im,psf,10);
+% figure
+% imagesc(J)
+% daspect([1 1 1])
+% im=J;
+% save(['im',name],'im')
 %% generate psf (for sensor pixel 5120 x 5120)
 %for point source reconstruction, the rotation angle is very important and needs to be very precise!
 acoordinate; % load the designed lens unit coordinates (in mm)
@@ -36,9 +38,9 @@ a=round(a*222.2)+1;
 for idx=1:length(a)
     mask(a(idx,1),a(idx,2))=1; % generate psf
 end
-figure
+% figure
 % mask=imgaussfilt(mask,5);
-roa=238.63; % rotation angle after calibration of lens array tilting to sensor
+roa=231.63; % rotation angle after calibration of lens array tilting to sensor
 roar=roa*pi/180; % rotation angle in degrees
 mask2=zeros(size(mask));
 [cx0,cy0]=find(mask~=0);
@@ -56,10 +58,10 @@ end
 
 mask2=padarray(mask2,[500 500]); % adjust lateral shift of lens array to image sensor
 mask2=mask2(round(size(mask2,1)/2)-2559+50:round(size(mask2,1)/2)+2560+50,round(size(mask2,2)/2)-2559-50:round(size(mask2,2)/2)+2560-50);
-[cx0,cy0]=find(mask2~=0);
+% [cx0,cy0]=find(mask2~=0);
 psf=mask2;
-imagesc(imgaussfilt(psf,5))
-daspect([1 1 1])
+% imagesc(imgaussfilt(psf,5))
+% daspect([1 1 1])
 %% calculate psf peak coordinate scaled at base distance for object reconstruction
 orx=2560; % origin of pixel coordinate (5120 in both x and y)
 ory=2560;
@@ -76,9 +78,11 @@ end
 psf=psf2;
 figure
 imagesc(imgaussfilt(psf,5))
+title('psf')
 daspect([1 1 1])
 %% 3D reconstruction by ray tracing
-dist=(-4:2:18)+40; % reconstruction distance in mm
+% dist=(-4:2:18)+40; % reconstruction distance in mm
+dist=[18.5 23.5];
 % close all
 S=1024; % reconstruction voxel in x and y (same as sensor size)
 fov=S; % reconstruction field of view in voxels (can be larger than sensor size)
@@ -89,12 +93,9 @@ figure(1)
 imagesc(im)
 orx=2560;
 ory=2560;
-% t1=1;
-% t2=1;
-scale0=1.1295; % base obj plane scale
-mag0=scale0-1; % base obj plane magnification 
+[cx0,cy0]=find(psf~=0); % lens unit coordinates
 % for disd=32:0.4:36.6 % reconstruction distance (for microspheres)
-for disdx=1:12 % reconstruction distance
+for disdx=1:2 % reconstruction distance
     disd=dist(disdx);
     mag=4.6/disd; % calculate magnification
     scale=1+mag; % calculate scale
@@ -104,8 +105,7 @@ for disdx=1:12 % reconstruction distance
     smin=1;%round(S/2-fov/2*mag0/mag);  % min coordinate in voxel (equal to 1 when reconstruction fov = sensor size)
     smax=1024;%round(S/2+fov/2*mag0/mag); % max coordinate in voxel
     recon=zeros(smax-smin+1); % initialize current plan voxels
-    [cx0,cy0]=find(psf~=0);
-	for idx1=smin:smax % ray tracing scan voxels along x
+    	for idx1=smin:smax % ray tracing scan voxels along x
         iidx1=idx1-smin+1;
         cx=round((cx0-idx1*So)*scale+idx1*So);
         for idx2=smin:smax % ray tracing scan voxels along y
